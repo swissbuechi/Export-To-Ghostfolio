@@ -105,13 +105,13 @@ Login to your Interactive Brokers account. Navigate to Account Management and cl
 
 ![Export instructions for IBKR](./assets/export-ibkr.jpg)
 
-#### Trades
+#### IBKR Trades
 
-For trades, select "Trades". Then select the following properties: `Buy/Sell, TradeDate, ISIN, Quantity, TradePrice, TradeMoney, CurrencyPrimary, IBCommission, IBCommissionCurrency`.
+For trades, select "Trades". Then select the following properties: `Buy/Sell, TradeDate, ISIN, Quantity, TradePrice, TradeMoney, CurrencyPrimary, IBCommission, IBCommissionCurrency`. (Order of properties needs to match too)
 
-#### Dividends
+#### IBKR Dividends
 
-For dividends, select "Cash Transactions". Then select the following properties: `Type, SettleDate, ISIN, Description, Amount, CurrencyPrimary`.
+For dividends, select "Cash Transactions". Then select the following properties: `Type, SettleDate, ISIN, Description, Amount, CurrencyPrimary`. (Order of properties needs to match too)
 
 ### InvestEngine
 
