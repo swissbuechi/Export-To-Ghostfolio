@@ -1,0 +1,11 @@
+services:
+  export-to-ghostfolio:
+    image: ghcr.io/swissbuechi/export-to-ghostfolio:latest
+    container_name: export-to-ghostfolio
+    environment:
+      - MODE=api
+      - API_PORT=8080
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
