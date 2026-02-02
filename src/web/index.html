@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export to Ghostfolio</title>
+    <title>Export To Ghostfolio</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
     <style>
         * {
@@ -20,6 +20,11 @@
         h1 {
             color: #1a1a1a;
             margin-bottom: 8px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        h1:hover {
+            opacity: 0.7;
         }
         .subtitle {
             color: #666;
@@ -177,6 +182,95 @@
         .input-group .paste-btn:active {
             transform: translateY(-50%) scale(0.95);
         }
+        .tags-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            min-height: 46px;
+            background: white;
+            cursor: text;
+            transition: border-color 0.2s;
+        }
+        .tags-display:focus {
+            border-color: #4a90d9;
+            outline: none;
+        }
+        .tags-display:focus-within {
+            border-color: #4a90d9;
+            outline: none;
+        }
+        .tags-display.empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+            pointer-events: none;
+        }
+        .tag-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #e3f2fd;
+            color: #1565c0;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .tag-bubble-remove {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .tag-bubble-remove:hover {
+            opacity: 1;
+        }
+        .account-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+            cursor: text;
+            transition: border-color 0.2s;
+            min-height: 46px;
+        }
+        .account-display:hover {
+            border-color: #4a90d9;
+        }
+        .account-display:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+        .account-display.empty:before {
+            content: attr(data-placeholder);
+            color: #999;
+            pointer-events: none;
+        }
+        .account-bubble {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border-radius: 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .account-bubble-remove {
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+            margin-left: 2px;
+        }
+        .account-bubble-remove:hover {
+            opacity: 1;
+        }
         .history-dropdown {
             position: absolute;
             top: 100%;
@@ -249,6 +343,33 @@
             text-align: center;
             color: #888;
             font-size: 14px;
+        }
+        .history-item-checkbox {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        .history-item.selected {
+            background: #e3f2fd;
+        }
+        .tag-dropdown-footer {
+            padding: 8px 12px;
+            border-top: 2px solid #e0e0e0;
+            background: #f8f9fa;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tag-dropdown-footer button {
+            width: auto;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .tag-dropdown-footer .apply-btn {
+            background: #4a90d9;
+            color: white;
+        }
+        .tag-dropdown-footer .apply-btn:hover {
+            background: #3a7bc8;
         }
         .actions-row {
             margin-top: 12px;
@@ -323,7 +444,7 @@
     </style>
 </head>
 <body>
-    <h1>📊 Export to Ghostfolio</h1>
+    <h1 id="appTitle">📊 Export To Ghostfolio</h1>
     <p class="subtitle">Convert your broker CSV export to Ghostfolio format</p>
 
     <div class="card">
@@ -331,13 +452,12 @@
             <label for="accountId">Ghostfolio Account ID</label>
             <div class="input-group">
                 <input
-                    type="text"
+                    type="hidden"
                     id="accountId"
                     name="accountId"
-                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                    pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
                     required
                 >
+                <div class="account-display empty" id="accountDisplay" contenteditable="true" data-placeholder="Type or paste UUID, or click to select from history"></div>
                 <button type="button" class="paste-btn" id="accountPasteBtn" title="Paste from clipboard">📋</button>
                 <div class="history-dropdown" id="accountHistoryDropdown"></div>
             </div>
@@ -345,11 +465,11 @@
             <label for="tagIds">Tag IDs (optional)</label>
             <div class="input-group">
                 <input
-                    type="text"
+                    type="hidden"
                     id="tagIds"
                     name="tagIds"
-                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000, 550e8400-e29b-41d4-a716-446655440001"
                 >
+                <div class="tags-display empty" id="tagsDisplay" contenteditable="true" data-placeholder="Type or paste UUID, or click to select from history"></div>
                 <button type="button" class="paste-btn" id="tagPasteBtn" title="Paste from clipboard">📋</button>
                 <div class="history-dropdown" id="tagHistoryDropdown"></div>
             </div>
@@ -373,13 +493,13 @@
         <strong>Supported brokers:</strong> Trading212, DEGIRO, Schwab, IBKR, Swissquote, Coinbase, eToro, Revolut, and many more.
         The file format is auto-detected from the CSV header.
         <br><br>
-        Find your Account ID in Ghostfolio under <strong>Settings → Accounts</strong>.
+        Find your Account ID in Ghostfolio under <strong>Accounts → Edit</strong>.
         <br>
-        Find your Tag IDs in Ghostfolio under <strong>Settings → Tags</strong> (click a tag to see its UUID in the URL).
+        Find your Tag IDs in Ghostfolio under <strong>Admin Control → Settings → Tags → Edit</strong> (click a tag to see its UUID in the URL).
     </div>
 
     <div class="actions-row">
-        <button type="button" id="exportBackupBtn">Export IDs backup (.json)</button>
+        <button type="button" id="exportBackupBtn">Export IDs backup</button>
         <input type="file" id="importBackupInput" accept="application/json,.json" />
         <button type="button" id="importBackupBtn">Import backup</button>
     </div>
@@ -407,6 +527,8 @@
         const submitBtn = document.getElementById('submitBtn');
         const accountIdInput = document.getElementById('accountId');
         const tagIdsInput = document.getElementById('tagIds');
+        const accountDisplay = document.getElementById('accountDisplay');
+        const tagsDisplay = document.getElementById('tagsDisplay');
 
         const accountPasteBtn = document.getElementById('accountPasteBtn');
         const tagPasteBtn = document.getElementById('tagPasteBtn');
@@ -424,6 +546,8 @@
         const aliasModalCancel = document.getElementById('aliasModalCancel');
         const aliasModalSave = document.getElementById('aliasModalSave');
 
+        const appTitle = document.getElementById('appTitle');
+
         const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
         const STORAGE_KEYS = {
@@ -432,6 +556,11 @@
             accounts: 'ghostfolio_account_history_v1',
             tags: 'ghostfolio_tag_history_v1'
         };
+
+        // Reload app on title click
+        appTitle.addEventListener('click', () => {
+            window.location.reload();
+        });
 
         // History management functions
         function loadHistory(key) {
@@ -495,7 +624,90 @@
                 .replaceAll("'", '&#039;');
         }
 
-        function renderHistoryDropdown(dropdownEl, key, onSelect) {
+        function updateAccountDisplay() {
+            const accountId = accountIdInput.value.trim();
+            if (!accountId) {
+                accountDisplay.classList.add('empty');
+                accountDisplay.innerHTML = '';
+                accountDisplay.setAttribute('data-editing', 'false');
+                return;
+            }
+
+            accountDisplay.classList.remove('empty');
+            const history = loadHistory(STORAGE_KEYS.accounts);
+            const item = history.find(x => x.id.toLowerCase() === accountId.toLowerCase());
+            const alias = item?.alias && item.alias.trim() ? item.alias : accountId;
+
+            accountDisplay.innerHTML = `
+                <div class="account-bubble">
+                    <span>${escapeHtml(alias)}</span>
+                    <span class="account-bubble-remove">×</span>
+                </div>
+            `;
+            accountDisplay.setAttribute('data-editing', 'false');
+
+            // Add click handler to remove button
+            const removeBtn = accountDisplay.querySelector('.account-bubble-remove');
+            if (removeBtn) {
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    accountIdInput.value = '';
+                    localStorage.setItem(STORAGE_KEYS.accountCurrent, '');
+                    updateAccountDisplay();
+                });
+            }
+
+            // Add click handler to bubble (not the remove button) to open dropdown
+            const bubble = accountDisplay.querySelector('.account-bubble');
+            if (bubble) {
+                bubble.addEventListener('click', (e) => {
+                    if (!e.target.classList.contains('account-bubble-remove')) {
+                        openAccountDropdown();
+                    }
+                });
+            }
+        }
+
+        function updateTagsDisplay() {
+            const tagIds = tagIdsInput.value.trim();
+            if (!tagIds) {
+                tagsDisplay.classList.add('empty');
+                tagsDisplay.innerHTML = '';
+                return;
+            }
+
+            tagsDisplay.classList.remove('empty');
+            const tagIdArray = tagIds.split(',').map(t => t.trim()).filter(t => t);
+            const history = loadHistory(STORAGE_KEYS.tags);
+
+            const bubbles = tagIdArray.map(id => {
+                const item = history.find(x => x.id.toLowerCase() === id.toLowerCase());
+                const alias = item?.alias && item.alias.trim() ? item.alias : id;
+                return `
+                    <div class="tag-bubble" data-id="${escapeHtml(id)}">
+                        <span>${escapeHtml(alias)}</span>
+                        <span class="tag-bubble-remove" data-id="${escapeHtml(id)}">×</span>
+                    </div>
+                `;
+            }).join('');
+
+            tagsDisplay.innerHTML = bubbles;
+
+            // Add click handlers to remove buttons
+            tagsDisplay.querySelectorAll('.tag-bubble-remove').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const idToRemove = btn.getAttribute('data-id');
+                    const currentTags = tagIdsInput.value.split(',').map(t => t.trim()).filter(t => t);
+                    const newTags = currentTags.filter(t => t.toLowerCase() !== idToRemove.toLowerCase());
+                    tagIdsInput.value = newTags.join(', ');
+                    localStorage.setItem(STORAGE_KEYS.tagCurrent, tagIdsInput.value);
+                    updateTagsDisplay();
+                });
+            });
+        }
+
+        function renderAccountHistoryDropdown(dropdownEl, key, onSelect) {
             const history = loadHistory(key).sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
 
             if (history.length === 0) {
@@ -505,7 +717,7 @@
 
             dropdownEl.innerHTML = history
                 .map(item => {
-                    const alias = item.alias && item.alias.trim() ? item.alias.trim() : '(no alias)';
+                    const alias = item.alias && item.alias.trim() ? item.alias.trim() : item.id;
                     return `
                         <div class="history-item" data-id="${escapeHtml(item.id)}">
                             <div class="history-item-content">
@@ -528,6 +740,7 @@
                     const id = row.getAttribute('data-id');
                     if (!id) return;
                     onSelect(id);
+                    updateAccountDisplay();
                 });
             });
 
@@ -547,7 +760,110 @@
                     const id = btn.getAttribute('data-id');
                     if (!id) return;
                     removeHistoryItem(key, id);
-                    renderHistoryDropdown(dropdownEl, key, onSelect);
+                    renderAccountHistoryDropdown(dropdownEl, key, onSelect);
+                });
+            });
+        }
+
+        function renderTagHistoryDropdown(dropdownEl, key) {
+            const history = loadHistory(key).sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
+
+            if (history.length === 0) {
+                dropdownEl.innerHTML = '<div class="history-empty">No tags yet</div>';
+                return;
+            }
+
+            // Get currently selected tag IDs from input
+            const currentValue = tagIdsInput.value.trim();
+            const selectedIds = currentValue ? currentValue.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
+
+            const itemsHtml = history
+                .map(item => {
+                    const alias = item.alias && item.alias.trim() ? item.alias.trim() : item.id;
+                    const isChecked = selectedIds.includes(item.id.toLowerCase());
+                    return `
+                        <div class="history-item ${isChecked ? 'selected' : ''}" data-id="${escapeHtml(item.id)}">
+                            <input type="checkbox" class="history-item-checkbox" data-id="${escapeHtml(item.id)}" ${isChecked ? 'checked' : ''}>
+                            <div class="history-item-content">
+                                <div class="history-item-alias">${escapeHtml(alias)}</div>
+                                <div class="history-item-id">${escapeHtml(item.id)}</div>
+                            </div>
+                            <div class="history-item-actions">
+                                <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
+                                <button type="button" class="delete-btn" data-action="delete" data-id="${escapeHtml(item.id)}">Del</button>
+                            </div>
+                        </div>
+                    `;
+                })
+                .join('');
+
+            dropdownEl.innerHTML = itemsHtml;
+
+            // Auto-apply checkbox changes
+            dropdownEl.querySelectorAll('.history-item-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const row = checkbox.closest('.history-item');
+                    if (checkbox.checked) {
+                        row.classList.add('selected');
+                    } else {
+                        row.classList.remove('selected');
+                    }
+
+                    // Auto-apply: Update tags immediately
+                    const selectedCheckboxes = dropdownEl.querySelectorAll('.history-item-checkbox:checked');
+                    const selectedTagIds = Array.from(selectedCheckboxes).map(cb => cb.getAttribute('data-id'));
+
+                    if (selectedTagIds.length > 0) {
+                        const value = selectedTagIds.join(', ');
+                        tagIdsInput.value = value;
+                        localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
+
+                        // Update lastUsed for selected tags
+                        selectedTagIds.forEach(id => {
+                            upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                        });
+                    } else {
+                        tagIdsInput.value = '';
+                        localStorage.setItem(STORAGE_KEYS.tagCurrent, '');
+                    }
+
+                    updateTagsDisplay();
+                });
+            });
+
+            // Row click toggles checkbox
+            dropdownEl.querySelectorAll('.history-item').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    const actionBtn = e.target.closest('button');
+                    const checkbox = e.target.closest('.history-item-checkbox');
+                    if (actionBtn || checkbox) return;
+
+                    const checkboxEl = row.querySelector('.history-item-checkbox');
+                    checkboxEl.checked = !checkboxEl.checked;
+                    checkboxEl.dispatchEvent(new Event('change'));
+                });
+            });
+
+            // Edit button
+            dropdownEl.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    const current = loadHistory(key).find(x => x.id.toLowerCase() === id.toLowerCase());
+                    openAliasModal(key, id, current?.alias || '');
+                });
+            });
+
+            // Delete button
+            dropdownEl.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    removeHistoryItem(key, id);
+                    renderTagHistoryDropdown(dropdownEl, key);
                 });
             });
         }
@@ -558,7 +874,7 @@
         }
 
         function openAccountDropdown() {
-            renderHistoryDropdown(accountHistoryDropdown, STORAGE_KEYS.accounts, (id) => {
+            renderAccountHistoryDropdown(accountHistoryDropdown, STORAGE_KEYS.accounts, (id) => {
                 accountIdInput.value = id;
                 localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
                 upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
@@ -569,12 +885,7 @@
         }
 
         function openTagDropdown() {
-            renderHistoryDropdown(tagHistoryDropdown, STORAGE_KEYS.tags, (id) => {
-                tagIdsInput.value = id;
-                localStorage.setItem(STORAGE_KEYS.tagCurrent, id);
-                upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
-                closeDropdowns();
-            });
+            renderTagHistoryDropdown(tagHistoryDropdown, STORAGE_KEYS.tags);
             accountHistoryDropdown.classList.remove('show');
             tagHistoryDropdown.classList.add('show');
         }
@@ -609,9 +920,23 @@
             const alias = aliasModalInput.value.trim();
             updateAlias(modalContext.key, modalContext.id, alias);
 
+            // Refresh displays
+            updateAccountDisplay();
+            updateTagsDisplay();
+
             // Refresh dropdowns if they're open
-            if (accountHistoryDropdown.classList.contains('show')) openAccountDropdown();
-            if (tagHistoryDropdown.classList.contains('show')) openTagDropdown();
+            if (accountHistoryDropdown.classList.contains('show')) {
+                renderAccountHistoryDropdown(accountHistoryDropdown, STORAGE_KEYS.accounts, (id) => {
+                    accountIdInput.value = id;
+                    localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
+                    upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
+                    updateAccountDisplay();
+                    closeDropdowns();
+                });
+            }
+            if (tagHistoryDropdown.classList.contains('show')) {
+                renderTagHistoryDropdown(tagHistoryDropdown, STORAGE_KEYS.tags);
+            }
 
             closeAliasModal();
         });
@@ -634,6 +959,7 @@
                 accountIdInput.value = id;
                 localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
                 upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
+                updateAccountDisplay();
                 openAccountDropdown();
                 showStatus('✓ Pasted Account ID from clipboard.', 'success');
             } catch {
@@ -646,13 +972,19 @@
                 const text = await navigator.clipboard.readText();
                 const uuids = extractUuids(text);
                 if (uuids.length === 0) {
-                    showStatus('Nothing to paste: clipboard does not contain UUIDs.', 'error');
+                    showStatus('Nothing to paste: clipboard does not contain a UUID.', 'error');
                     return;
                 }
                 const value = uuids.join(', ');
                 tagIdsInput.value = value;
                 localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
-                upsertHistoryItem(STORAGE_KEYS.tags, value, null, Date.now());
+
+                // Store each tag individually in history
+                uuids.forEach(id => {
+                    upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                });
+
+                updateTagsDisplay();
                 openTagDropdown();
                 showStatus(`✓ Pasted ${uuids.length} Tag ID${uuids.length === 1 ? '' : 's'} from clipboard.`, 'success');
             } catch {
@@ -727,12 +1059,18 @@
                 if (uuidRegex.test(accountCurrent)) {
                     upsertHistoryItem(STORAGE_KEYS.accounts, accountCurrent, null, Date.now());
                 }
+                updateAccountDisplay();
             }
 
             if (tagsCurrent) {
                 localStorage.setItem(STORAGE_KEYS.tagCurrent, tagsCurrent);
                 tagIdsInput.value = tagsCurrent;
-                upsertHistoryItem(STORAGE_KEYS.tags, tagsCurrent, null, Date.now());
+                // Store each tag individually in history
+                const tagIdArray = tagsCurrent.split(',').map(t => t.trim()).filter(t => t && uuidRegex.test(t));
+                tagIdArray.forEach(id => {
+                    upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                });
+                updateTagsDisplay();
             }
         }
 
@@ -783,12 +1121,18 @@
             if (uuidRegex.test(savedAccountId.trim())) {
                 upsertHistoryItem(STORAGE_KEYS.accounts, savedAccountId.trim(), null, Date.now());
             }
+            updateAccountDisplay();
         }
 
         const savedTagIds = localStorage.getItem(STORAGE_KEYS.tagCurrent);
         if (savedTagIds) {
             tagIdsInput.value = savedTagIds;
-            upsertHistoryItem(STORAGE_KEYS.tags, savedTagIds.trim(), null, Date.now());
+            // Store each tag individually in history
+            const tagIdArray = savedTagIds.split(',').map(t => t.trim()).filter(t => t && uuidRegex.test(t));
+            tagIdArray.forEach(id => {
+                upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+            });
+            updateTagsDisplay();
         }
 
         // Save on change
@@ -798,29 +1142,232 @@
             if (value && uuidRegex.test(value)) {
                 upsertHistoryItem(STORAGE_KEYS.accounts, value, null, Date.now());
             }
+            updateAccountDisplay();
         });
 
         tagIdsInput.addEventListener('change', () => {
             const value = tagIdsInput.value.trim();
             localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
             if (value) {
-                upsertHistoryItem(STORAGE_KEYS.tags, value, null, Date.now());
+                // Store each tag individually in history
+                const tagIdArray = value.split(',').map(t => t.trim()).filter(t => t && uuidRegex.test(t));
+                tagIdArray.forEach(id => {
+                    upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                });
             }
+            updateTagsDisplay();
         });
 
-        // Open history dropdown on focus
-        accountIdInput.addEventListener('focus', () => {
+        // Click displays to open dropdowns
+        accountDisplay.addEventListener('click', (e) => {
+            // If clicking on empty area, allow editing
+            if (accountDisplay.classList.contains('empty')) {
+                accountDisplay.setAttribute('data-editing', 'true');
+                accountDisplay.focus();
+                return;
+            }
+
+            // If clicking remove button, let that handler take care of it
+            if (e.target.classList.contains('account-bubble-remove')) {
+                return;
+            }
+
+            // If clicking on bubble or anywhere else with content, open dropdown
             openAccountDropdown();
         });
 
-        tagIdsInput.addEventListener('focus', () => {
-            openTagDropdown();
+        tagsDisplay.addEventListener('click', (e) => {
+            // If clicking remove button, let that handler take care of it
+            if (e.target.classList.contains('tag-bubble-remove')) {
+                return;
+            }
+
+            // If clicking on empty area, allow editing
+            if (tagsDisplay.classList.contains('empty')) {
+                tagsDisplay.setAttribute('data-editing', 'true');
+                tagsDisplay.focus();
+                return;
+            }
+
+            // If clicking on bubble, open dropdown
+            if (e.target.closest('.tag-bubble')) {
+                openTagDropdown();
+                return;
+            }
+
+            // If clicking empty space between bubbles, enable editing to add more
+            const clickedOnBubble = e.target.closest('.tag-bubble');
+            if (!clickedOnBubble) {
+                tagsDisplay.setAttribute('data-editing', 'true');
+                // Move cursor to end
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(tagsDisplay);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                tagsDisplay.focus();
+            }
+        });
+
+        // Handle pasted/typed content in account display
+        accountDisplay.addEventListener('input', () => {
+            // Remove empty class when user starts typing
+            if (accountDisplay.textContent.trim().length > 0) {
+                accountDisplay.classList.remove('empty');
+            } else {
+                accountDisplay.classList.add('empty');
+            }
+
+            const text = accountDisplay.textContent.trim();
+            if (text && accountDisplay.getAttribute('data-editing') === 'true') {
+                const uuids = extractUuids(text);
+                if (uuids.length > 0) {
+                    const id = uuids[0];
+                    accountIdInput.value = id;
+                    localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
+                    upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
+                    updateAccountDisplay();
+                }
+            }
+        });
+
+        accountDisplay.addEventListener('blur', () => {
+            // If still editing and no valid UUID found, clear display
+            if (accountDisplay.getAttribute('data-editing') === 'true') {
+                const text = accountDisplay.textContent.trim();
+                const uuids = extractUuids(text);
+
+                if (uuids.length === 0) {
+                    // No valid UUID found
+                    if (text.length > 0) {
+                        // Had invalid input, clear it
+                        accountIdInput.value = '';
+                        localStorage.setItem(STORAGE_KEYS.accountCurrent, '');
+                    }
+                    // Restore display (either empty or existing account)
+                    updateAccountDisplay();
+
+                    // Restore empty class if no account
+                    if (!accountIdInput.value.trim()) {
+                        accountDisplay.classList.add('empty');
+                    }
+                }
+
+                // Always reset editing state
+                accountDisplay.setAttribute('data-editing', 'false');
+            }
+        });
+
+        // Handle pasted/typed content in tags display
+        tagsDisplay.addEventListener('input', () => {
+            // Remove empty class when user starts typing
+            if (tagsDisplay.textContent.trim().length > 0) {
+                tagsDisplay.classList.remove('empty');
+            } else {
+                tagsDisplay.classList.add('empty');
+            }
+
+            const text = tagsDisplay.textContent.trim();
+            if (text && tagsDisplay.getAttribute('data-editing') === 'true') {
+                const uuids = extractUuids(text);
+                // Only allow single UUID at a time for direct typing
+                if (uuids.length === 1) {
+                    const id = uuids[0];
+                    // Get existing tags
+                    const existingTags = tagIdsInput.value.trim();
+                    const existingTagArray = existingTags ? existingTags.split(',').map(t => t.trim()).filter(t => t) : [];
+
+                    // Only add if not already in list
+                    if (!existingTagArray.some(t => t.toLowerCase() === id.toLowerCase())) {
+                        existingTagArray.push(id);
+                        const value = existingTagArray.join(', ');
+                        tagIdsInput.value = value;
+                        localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
+
+                        // Store in history
+                        upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                    }
+
+                    updateTagsDisplay();
+                    tagsDisplay.setAttribute('data-editing', 'false');
+                } else if (uuids.length > 1) {
+                    // Multiple UUIDs detected - show message and only take first one
+                    const id = uuids[0];
+                    const existingTags = tagIdsInput.value.trim();
+                    const existingTagArray = existingTags ? existingTags.split(',').map(t => t.trim()).filter(t => t) : [];
+
+                    if (!existingTagArray.some(t => t.toLowerCase() === id.toLowerCase())) {
+                        existingTagArray.push(id);
+                        const value = existingTagArray.join(', ');
+                        tagIdsInput.value = value;
+                        localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
+                        upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                    }
+
+                    updateTagsDisplay();
+                    tagsDisplay.setAttribute('data-editing', 'false');
+                    showStatus('⚠️ Only one tag at a time. Use the dropdown to select multiple tags, or paste via 📋 button.', 'error');
+                }
+            }
+        });
+
+        tagsDisplay.addEventListener('blur', () => {
+            // If still editing, finalize
+            if (tagsDisplay.getAttribute('data-editing') === 'true') {
+                const text = tagsDisplay.textContent.trim();
+                const uuids = extractUuids(text);
+
+                if (uuids.length === 0) {
+                    // No valid UUIDs found - restore display to show existing tags
+                    updateTagsDisplay();
+
+                    // Restore empty class if no tags
+                    if (!tagIdsInput.value.trim()) {
+                        tagsDisplay.classList.add('empty');
+                    }
+                }
+
+                // Always reset editing state
+                tagsDisplay.setAttribute('data-editing', 'false');
+            }
+        });
+
+        // Handle Enter key in account display
+        accountDisplay.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                accountDisplay.blur();
+            }
+        });
+
+        // Handle Enter key in tags display
+        tagsDisplay.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                tagsDisplay.blur();
+            }
+        });
+
+        // Open dropdowns on focus
+        accountDisplay.addEventListener('focus', () => {
+            // Only open dropdown if not in editing mode and has content
+            if (accountDisplay.getAttribute('data-editing') !== 'true') {
+                openAccountDropdown();
+            }
+        });
+
+        tagsDisplay.addEventListener('focus', () => {
+            // Only open dropdown if not in editing mode
+            if (tagsDisplay.getAttribute('data-editing') !== 'true') {
+                openTagDropdown();
+            }
         });
 
         // Close dropdowns on outside click
         document.addEventListener('click', (e) => {
-            const clickedAccount = e.target.closest('.input-group') === accountIdInput.closest('.input-group');
-            const clickedTag = e.target.closest('.input-group') === tagIdsInput.closest('.input-group');
+            const clickedAccount = e.target.closest('.input-group') === accountDisplay.closest('.input-group');
+            const clickedTag = e.target.closest('.input-group') === tagsDisplay.closest('.input-group');
             const inModal = e.target.closest('.modal');
 
             if (!clickedAccount) accountHistoryDropdown.classList.remove('show');
@@ -907,7 +1454,13 @@
             }
 
             upsertHistoryItem(STORAGE_KEYS.accounts, accountId, null, Date.now());
-            if (tagIds) upsertHistoryItem(STORAGE_KEYS.tags, tagIds, null, Date.now());
+            if (tagIds) {
+                // Store each tag individually in history
+                const tagIdArray = tagIds.split(',').map(t => t.trim()).filter(t => t);
+                tagIdArray.forEach(id => {
+                    upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                });
+            }
 
             submitBtn.disabled = true;
             showStatus('<span class="spinner"></span>Converting... This may take a moment.', 'loading');
