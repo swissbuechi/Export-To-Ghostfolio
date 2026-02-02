@@ -148,6 +148,178 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+        .input-group input[type="text"] {
+            margin-bottom: 0;
+            padding-right: 40px;
+        }
+        .input-group .paste-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            width: auto;
+            padding: 4px 8px;
+            font-size: 18px;
+            cursor: pointer;
+            opacity: 0.6;
+            transition: opacity 0.2s;
+        }
+        .input-group .paste-btn:hover {
+            opacity: 1;
+            background: none;
+        }
+        .input-group .paste-btn:active {
+            transform: translateY(-50%) scale(0.95);
+        }
+        .history-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .history-dropdown.show {
+            display: block;
+        }
+        .history-item {
+            padding: 10px 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .history-item:hover {
+            background: #f5f5f5;
+        }
+        .history-item:last-child {
+            border-bottom: none;
+        }
+        .history-item-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .history-item-alias {
+            font-weight: 500;
+            color: #333;
+        }
+        .history-item-id {
+            font-size: 12px;
+            color: #888;
+            font-family: monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .history-item-actions {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+        .history-item-actions button {
+            width: auto;
+            padding: 4px 8px;
+            font-size: 12px;
+            background: #f0f0f0;
+            color: #666;
+        }
+        .history-item-actions button:hover {
+            background: #e0e0e0;
+        }
+        .history-item-actions .delete-btn:hover {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .history-empty {
+            padding: 12px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+        .actions-row {
+            margin-top: 12px;
+            display: flex;
+            gap: 8px;
+        }
+        .actions-row button {
+            width: auto;
+            flex: 1;
+            padding: 10px 12px;
+            font-size: 14px;
+            background: #f0f0f0;
+            color: #333;
+        }
+        .actions-row button:hover:not(:disabled) {
+            background: #e0e0e0;
+        }
+        .actions-row input[type="file"] {
+            display: none;
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show {
+            display: flex;
+        }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.2);
+        }
+        .modal h3 {
+            margin: 0 0 16px 0;
+        }
+        .modal input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+        .modal input:focus {
+            outline: none;
+            border-color: #4a90d9;
+        }
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .modal-actions button {
+            width: auto;
+            padding: 10px 20px;
+        }
+        .modal-actions .cancel-btn {
+            background: #f0f0f0;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -157,22 +329,30 @@
     <div class="card">
         <form id="convertForm">
             <label for="accountId">Ghostfolio Account ID</label>
-            <input
-                type="text"
-                id="accountId"
-                name="accountId"
-                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-                required
-            >
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="accountId"
+                    name="accountId"
+                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
+                    pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+                    required
+                >
+                <button type="button" class="paste-btn" id="accountPasteBtn" title="Paste from clipboard">📋</button>
+                <div class="history-dropdown" id="accountHistoryDropdown"></div>
+            </div>
 
             <label for="tagIds">Tag IDs (optional)</label>
-            <input
-                type="text"
-                id="tagIds"
-                name="tagIds"
-                placeholder="e.g. uuid1, uuid2 (comma-separated)"
-            >
+            <div class="input-group">
+                <input
+                    type="text"
+                    id="tagIds"
+                    name="tagIds"
+                    placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000, 550e8400-e29b-41d4-a716-446655440001"
+                >
+                <button type="button" class="paste-btn" id="tagPasteBtn" title="Paste from clipboard">📋</button>
+                <div class="history-dropdown" id="tagHistoryDropdown"></div>
+            </div>
 
             <label>CSV Export File</label>
             <div class="file-upload" id="dropZone">
@@ -195,7 +375,27 @@
         <br><br>
         Find your Account ID in Ghostfolio under <strong>Settings → Accounts</strong>.
         <br>
-        Find your Tag IDs in Ghostfolio under <strong>Settings → Tags</strong> (click on a tag to see its UUID in the URL).
+        Find your Tag IDs in Ghostfolio under <strong>Settings → Tags</strong> (click a tag to see its UUID in the URL).
+    </div>
+
+    <div class="actions-row">
+        <button type="button" id="exportBackupBtn">Export IDs backup (.json)</button>
+        <input type="file" id="importBackupInput" accept="application/json,.json" />
+        <button type="button" id="importBackupBtn">Import backup</button>
+    </div>
+
+    <!-- Alias edit modal -->
+    <div class="modal-overlay" id="aliasModalOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal">
+            <h3 id="aliasModalTitle">Edit alias</h3>
+            <div style="font-size: 12px; color: #666; margin-bottom: 12px; font-family: monospace;" id="aliasModalId"></div>
+            <label for="aliasModalInput" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">Alias</label>
+            <input type="text" id="aliasModalInput" placeholder="e.g. IBKR Main Account" />
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" id="aliasModalCancel">Cancel</button>
+                <button type="button" id="aliasModalSave">Save</button>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -208,26 +408,434 @@
         const accountIdInput = document.getElementById('accountId');
         const tagIdsInput = document.getElementById('tagIds');
 
-        // Load saved account ID from localStorage
-        const savedAccountId = localStorage.getItem('ghostfolio_account_id');
-        if (savedAccountId) {
-            accountIdInput.value = savedAccountId;
+        const accountPasteBtn = document.getElementById('accountPasteBtn');
+        const tagPasteBtn = document.getElementById('tagPasteBtn');
+        const accountHistoryDropdown = document.getElementById('accountHistoryDropdown');
+        const tagHistoryDropdown = document.getElementById('tagHistoryDropdown');
+
+        const exportBackupBtn = document.getElementById('exportBackupBtn');
+        const importBackupBtn = document.getElementById('importBackupBtn');
+        const importBackupInput = document.getElementById('importBackupInput');
+
+        const aliasModalOverlay = document.getElementById('aliasModalOverlay');
+        const aliasModalTitle = document.getElementById('aliasModalTitle');
+        const aliasModalId = document.getElementById('aliasModalId');
+        const aliasModalInput = document.getElementById('aliasModalInput');
+        const aliasModalCancel = document.getElementById('aliasModalCancel');
+        const aliasModalSave = document.getElementById('aliasModalSave');
+
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+        const STORAGE_KEYS = {
+            accountCurrent: 'ghostfolio_account_id',
+            tagCurrent: 'ghostfolio_tag_ids',
+            accounts: 'ghostfolio_account_history_v1',
+            tags: 'ghostfolio_tag_history_v1'
+        };
+
+        // History management functions
+        function loadHistory(key) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw) return [];
+                const parsed = JSON.parse(raw);
+                if (!Array.isArray(parsed)) return [];
+                return parsed
+                    .filter(x => x && typeof x.id === 'string')
+                    .map(x => ({
+                        id: String(x.id),
+                        alias: typeof x.alias === 'string' ? x.alias : '',
+                        lastUsed: typeof x.lastUsed === 'number' ? x.lastUsed : 0
+                    }))
+                    .slice(0, 100);
+            } catch {
+                return [];
+            }
         }
 
-        // Load saved tag IDs from localStorage
-        const savedTagIds = localStorage.getItem('ghostfolio_tag_ids');
-        if (savedTagIds) {
-            tagIdsInput.value = savedTagIds;
+        function saveHistory(key, items) {
+            localStorage.setItem(key, JSON.stringify(items.slice(0, 100)));
         }
 
-        // Save account ID when changed
-        accountIdInput.addEventListener('change', () => {
-            localStorage.setItem('ghostfolio_account_id', accountIdInput.value);
+        function upsertHistoryItem(key, id, alias, lastUsed) {
+            const history = loadHistory(key);
+            const idx = history.findIndex(x => x.id.toLowerCase() === id.toLowerCase());
+            const nextItem = {
+                id,
+                alias: alias ?? (idx >= 0 ? history[idx].alias : ''),
+                lastUsed: lastUsed ?? Date.now()
+            };
+            if (idx >= 0) history.splice(idx, 1);
+            history.unshift(nextItem);
+            saveHistory(key, history);
+        }
+
+        function removeHistoryItem(key, id) {
+            const history = loadHistory(key).filter(x => x.id.toLowerCase() !== id.toLowerCase());
+            saveHistory(key, history);
+        }
+
+        function updateAlias(key, id, alias) {
+            const history = loadHistory(key);
+            const idx = history.findIndex(x => x.id.toLowerCase() === id.toLowerCase());
+            if (idx === -1) {
+                history.unshift({ id, alias: alias || '', lastUsed: Date.now() });
+            } else {
+                history[idx] = { ...history[idx], alias: alias || '' };
+            }
+            saveHistory(key, history);
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#039;');
+        }
+
+        function renderHistoryDropdown(dropdownEl, key, onSelect) {
+            const history = loadHistory(key).sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0));
+
+            if (history.length === 0) {
+                dropdownEl.innerHTML = '<div class="history-empty">No history yet</div>';
+                return;
+            }
+
+            dropdownEl.innerHTML = history
+                .map(item => {
+                    const alias = item.alias && item.alias.trim() ? item.alias.trim() : '(no alias)';
+                    return `
+                        <div class="history-item" data-id="${escapeHtml(item.id)}">
+                            <div class="history-item-content">
+                                <div class="history-item-alias">${escapeHtml(alias)}</div>
+                                <div class="history-item-id">${escapeHtml(item.id)}</div>
+                            </div>
+                            <div class="history-item-actions">
+                                <button type="button" data-action="edit" data-id="${escapeHtml(item.id)}">Edit</button>
+                                <button type="button" class="delete-btn" data-action="delete" data-id="${escapeHtml(item.id)}">Del</button>
+                            </div>
+                        </div>
+                    `;
+                })
+                .join('');
+
+            dropdownEl.querySelectorAll('.history-item').forEach(row => {
+                row.addEventListener('click', (e) => {
+                    const actionBtn = e.target.closest('button');
+                    if (actionBtn) return;
+                    const id = row.getAttribute('data-id');
+                    if (!id) return;
+                    onSelect(id);
+                });
+            });
+
+            dropdownEl.querySelectorAll('button[data-action="edit"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    const current = loadHistory(key).find(x => x.id.toLowerCase() === id.toLowerCase());
+                    openAliasModal(key, id, current?.alias || '');
+                });
+            });
+
+            dropdownEl.querySelectorAll('button[data-action="delete"]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = btn.getAttribute('data-id');
+                    if (!id) return;
+                    removeHistoryItem(key, id);
+                    renderHistoryDropdown(dropdownEl, key, onSelect);
+                });
+            });
+        }
+
+        function closeDropdowns() {
+            accountHistoryDropdown.classList.remove('show');
+            tagHistoryDropdown.classList.remove('show');
+        }
+
+        function openAccountDropdown() {
+            renderHistoryDropdown(accountHistoryDropdown, STORAGE_KEYS.accounts, (id) => {
+                accountIdInput.value = id;
+                localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
+                upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
+                closeDropdowns();
+            });
+            tagHistoryDropdown.classList.remove('show');
+            accountHistoryDropdown.classList.add('show');
+        }
+
+        function openTagDropdown() {
+            renderHistoryDropdown(tagHistoryDropdown, STORAGE_KEYS.tags, (id) => {
+                tagIdsInput.value = id;
+                localStorage.setItem(STORAGE_KEYS.tagCurrent, id);
+                upsertHistoryItem(STORAGE_KEYS.tags, id, null, Date.now());
+                closeDropdowns();
+            });
+            accountHistoryDropdown.classList.remove('show');
+            tagHistoryDropdown.classList.add('show');
+        }
+
+        // Modal functions
+        let modalContext = null;
+
+        function openAliasModal(key, id, existingAlias) {
+            modalContext = { key, id };
+            aliasModalTitle.textContent = key === STORAGE_KEYS.accounts ? 'Account alias' : 'Tag set alias';
+            aliasModalId.textContent = id;
+            aliasModalInput.value = existingAlias || '';
+            aliasModalOverlay.classList.add('show');
+            aliasModalOverlay.setAttribute('aria-hidden', 'false');
+            setTimeout(() => aliasModalInput.focus(), 0);
+        }
+
+        function closeAliasModal() {
+            modalContext = null;
+            aliasModalOverlay.classList.remove('show');
+            aliasModalOverlay.setAttribute('aria-hidden', 'true');
+            aliasModalInput.value = '';
+        }
+
+        aliasModalCancel.addEventListener('click', closeAliasModal);
+        aliasModalOverlay.addEventListener('click', (e) => {
+            if (e.target === aliasModalOverlay) closeAliasModal();
         });
 
-        // Save tag IDs when changed
+        aliasModalSave.addEventListener('click', () => {
+            if (!modalContext) return;
+            const alias = aliasModalInput.value.trim();
+            updateAlias(modalContext.key, modalContext.id, alias);
+
+            // Refresh dropdowns if they're open
+            if (accountHistoryDropdown.classList.contains('show')) openAccountDropdown();
+            if (tagHistoryDropdown.classList.contains('show')) openTagDropdown();
+
+            closeAliasModal();
+        });
+
+        // Clipboard paste functions
+        function extractUuids(text) {
+            const matches = String(text || '').match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/ig);
+            return matches ? Array.from(new Set(matches.map(m => m.trim()))) : [];
+        }
+
+        async function pasteAccountId() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const uuids = extractUuids(text);
+                if (uuids.length === 0) {
+                    showStatus('Nothing to paste: clipboard does not contain a UUID.', 'error');
+                    return;
+                }
+                const id = uuids[0];
+                accountIdInput.value = id;
+                localStorage.setItem(STORAGE_KEYS.accountCurrent, id);
+                upsertHistoryItem(STORAGE_KEYS.accounts, id, null, Date.now());
+                openAccountDropdown();
+                showStatus('✓ Pasted Account ID from clipboard.', 'success');
+            } catch {
+                showStatus('✗ Could not read clipboard (requires HTTPS or permission).', 'error');
+            }
+        }
+
+        async function pasteTagIds() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const uuids = extractUuids(text);
+                if (uuids.length === 0) {
+                    showStatus('Nothing to paste: clipboard does not contain UUIDs.', 'error');
+                    return;
+                }
+                const value = uuids.join(', ');
+                tagIdsInput.value = value;
+                localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
+                upsertHistoryItem(STORAGE_KEYS.tags, value, null, Date.now());
+                openTagDropdown();
+                showStatus(`✓ Pasted ${uuids.length} Tag ID${uuids.length === 1 ? '' : 's'} from clipboard.`, 'success');
+            } catch {
+                showStatus('✗ Could not read clipboard (requires HTTPS or permission).', 'error');
+            }
+        }
+
+        accountPasteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            pasteAccountId();
+        });
+
+        tagPasteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            pasteTagIds();
+        });
+
+        // Backup export/import functions
+        function buildBackupJson() {
+            return {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                account: {
+                    current: localStorage.getItem(STORAGE_KEYS.accountCurrent) || '',
+                    history: loadHistory(STORAGE_KEYS.accounts)
+                },
+                tags: {
+                    current: localStorage.getItem(STORAGE_KEYS.tagCurrent) || '',
+                    history: loadHistory(STORAGE_KEYS.tags)
+                }
+            };
+        }
+
+        function applyBackupJson(backup) {
+            if (!backup || typeof backup !== 'object') {
+                throw new Error('Invalid backup file format.');
+            }
+            if (backup.version !== 1) {
+                throw new Error(`Unsupported backup version: ${backup.version}`);
+            }
+
+            const accountHistory = Array.isArray(backup.account?.history) ? backup.account.history : [];
+            const tagHistory = Array.isArray(backup.tags?.history) ? backup.tags.history : [];
+
+            const normalizedAccountHistory = accountHistory
+                .filter(x => x && typeof x.id === 'string')
+                .map(x => ({
+                    id: String(x.id),
+                    alias: typeof x.alias === 'string' ? x.alias : '',
+                    lastUsed: typeof x.lastUsed === 'number' ? x.lastUsed : 0
+                }))
+                .slice(0, 100);
+
+            const normalizedTagHistory = tagHistory
+                .filter(x => x && typeof x.id === 'string')
+                .map(x => ({
+                    id: String(x.id),
+                    alias: typeof x.alias === 'string' ? x.alias : '',
+                    lastUsed: typeof x.lastUsed === 'number' ? x.lastUsed : 0
+                }))
+                .slice(0, 100);
+
+            saveHistory(STORAGE_KEYS.accounts, normalizedAccountHistory);
+            saveHistory(STORAGE_KEYS.tags, normalizedTagHistory);
+
+            const accountCurrent = typeof backup.account?.current === 'string' ? backup.account.current.trim() : '';
+            const tagsCurrent = typeof backup.tags?.current === 'string' ? backup.tags.current.trim() : '';
+
+            if (accountCurrent) {
+                localStorage.setItem(STORAGE_KEYS.accountCurrent, accountCurrent);
+                accountIdInput.value = accountCurrent;
+                if (uuidRegex.test(accountCurrent)) {
+                    upsertHistoryItem(STORAGE_KEYS.accounts, accountCurrent, null, Date.now());
+                }
+            }
+
+            if (tagsCurrent) {
+                localStorage.setItem(STORAGE_KEYS.tagCurrent, tagsCurrent);
+                tagIdsInput.value = tagsCurrent;
+                upsertHistoryItem(STORAGE_KEYS.tags, tagsCurrent, null, Date.now());
+            }
+        }
+
+        exportBackupBtn.addEventListener('click', () => {
+            try {
+                const backup = buildBackupJson();
+                const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'export-to-ghostfolio-ids-backup.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showStatus('✓ Exported IDs backup.', 'success');
+            } catch (err) {
+                showStatus('✗ Failed to export backup: ' + err.message, 'error');
+            }
+        });
+
+        importBackupBtn.addEventListener('click', () => {
+            importBackupInput.click();
+        });
+
+        importBackupInput.addEventListener('change', async (e) => {
+            const file = e.target.files && e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const json = JSON.parse(text);
+                applyBackupJson(json);
+                showStatus('✓ Imported backup successfully.', 'success');
+            } catch (err) {
+                showStatus('✗ Failed to import backup: ' + err.message, 'error');
+            } finally {
+                importBackupInput.value = '';
+            }
+        });
+
+        // Load saved values and seed history
+        const savedAccountId = localStorage.getItem(STORAGE_KEYS.accountCurrent);
+        if (savedAccountId) {
+            accountIdInput.value = savedAccountId;
+            if (uuidRegex.test(savedAccountId.trim())) {
+                upsertHistoryItem(STORAGE_KEYS.accounts, savedAccountId.trim(), null, Date.now());
+            }
+        }
+
+        const savedTagIds = localStorage.getItem(STORAGE_KEYS.tagCurrent);
+        if (savedTagIds) {
+            tagIdsInput.value = savedTagIds;
+            upsertHistoryItem(STORAGE_KEYS.tags, savedTagIds.trim(), null, Date.now());
+        }
+
+        // Save on change
+        accountIdInput.addEventListener('change', () => {
+            const value = accountIdInput.value.trim();
+            localStorage.setItem(STORAGE_KEYS.accountCurrent, value);
+            if (value && uuidRegex.test(value)) {
+                upsertHistoryItem(STORAGE_KEYS.accounts, value, null, Date.now());
+            }
+        });
+
         tagIdsInput.addEventListener('change', () => {
-            localStorage.setItem('ghostfolio_tag_ids', tagIdsInput.value);
+            const value = tagIdsInput.value.trim();
+            localStorage.setItem(STORAGE_KEYS.tagCurrent, value);
+            if (value) {
+                upsertHistoryItem(STORAGE_KEYS.tags, value, null, Date.now());
+            }
+        });
+
+        // Open history dropdown on focus
+        accountIdInput.addEventListener('focus', () => {
+            openAccountDropdown();
+        });
+
+        tagIdsInput.addEventListener('focus', () => {
+            openTagDropdown();
+        });
+
+        // Close dropdowns on outside click
+        document.addEventListener('click', (e) => {
+            const clickedAccount = e.target.closest('.input-group') === accountIdInput.closest('.input-group');
+            const clickedTag = e.target.closest('.input-group') === tagIdsInput.closest('.input-group');
+            const inModal = e.target.closest('.modal');
+
+            if (!clickedAccount) accountHistoryDropdown.classList.remove('show');
+            if (!clickedTag) tagHistoryDropdown.classList.remove('show');
+            if (!inModal && e.target === aliasModalOverlay) {
+                closeAliasModal();
+            }
+        });
+
+        // Escape key closes dropdowns and modal
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeDropdowns();
+                closeAliasModal();
+            }
         });
 
         // File selection
@@ -283,14 +891,11 @@
                 return;
             }
 
-            // Validate UUID format
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
             if (!uuidRegex.test(accountId)) {
                 showStatus('Invalid Account ID format. Expected UUID format.', 'error');
                 return;
             }
 
-            // Validate tag IDs format (if provided)
             if (tagIds) {
                 const tagIdArray = tagIds.split(',').map(t => t.trim()).filter(t => t !== '');
                 for (const tagId of tagIdArray) {
@@ -301,6 +906,9 @@
                 }
             }
 
+            upsertHistoryItem(STORAGE_KEYS.accounts, accountId, null, Date.now());
+            if (tagIds) upsertHistoryItem(STORAGE_KEYS.tags, tagIds, null, Date.now());
+
             submitBtn.disabled = true;
             showStatus('<span class="spinner"></span>Converting... This may take a moment.', 'loading');
 
@@ -308,9 +916,7 @@
                 const formData = new FormData();
                 formData.append('file', file);
                 formData.append('accountId', accountId);
-                if (tagIds) {
-                    formData.append('tagIds', tagIds);
-                }
+                if (tagIds) formData.append('tagIds', tagIds);
 
                 const response = await fetch('/convert', {
                     method: 'POST',
@@ -322,7 +928,6 @@
                     throw new Error(error.message || 'Conversion failed');
                 }
 
-                // Get filename from Content-Disposition header
                 const disposition = response.headers.get('Content-Disposition');
                 let filename = 'ghostfolio-import.json';
                 if (disposition) {
@@ -330,7 +935,6 @@
                     if (match) filename = match[1];
                 }
 
-                // Download the file
                 const blob = await response.blob();
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
