@@ -3,176 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export to Ghostfolio</title>
+    <title>Export To Ghostfolio</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            background: #f5f5f5;
-            color: #333;
-        }
-        h1 {
-            color: #1a1a1a;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #666;
-            margin-bottom: 32px;
-        }
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            color: #444;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 20px;
-            transition: border-color 0.2s;
-        }
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #4a90d9;
-        }
-        .file-upload {
-            border: 2px dashed #ccc;
-            border-radius: 8px;
-            padding: 32px;
-            text-align: center;
-            margin-bottom: 20px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .file-upload:hover {
-            border-color: #4a90d9;
-            background: #f8fafc;
-        }
-        .file-upload.dragover {
-            border-color: #4a90d9;
-            background: #e8f4fc;
-        }
-        .file-upload.has-file {
-            border-color: #4caf50;
-            background: #e8f5e9;
-        }
-        .file-upload input {
-            display: none;
-        }
-        .file-upload-icon {
-            font-size: 48px;
-            margin-bottom: 8px;
-        }
-        .file-upload-text {
-            color: #666;
-        }
-        .file-name {
-            font-weight: 500;
-            color: #333;
-            word-break: break-all;
-        }
-        button {
-            width: 100%;
-            padding: 14px;
-            background: #4a90d9;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        button:hover:not(:disabled) {
-            background: #3a7bc8;
-        }
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-        .status {
-            margin-top: 20px;
-            padding: 16px;
-            border-radius: 8px;
-            display: none;
-        }
-        .status.error {
-            display: block;
-            background: #ffebee;
-            color: #c62828;
-        }
-        .status.success {
-            display: block;
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-        .status.loading {
-            display: block;
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-        .help {
-            margin-top: 24px;
-            font-size: 14px;
-            color: #666;
-        }
-        .help a {
-            color: #4a90d9;
-        }
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #1565c0;
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-right: 8px;
-            vertical-align: middle;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-    <h1>📊 Export to Ghostfolio</h1>
+    <h1 id="appTitle">📊 Export To Ghostfolio</h1>
     <p class="subtitle">Convert your broker CSV export to Ghostfolio format</p>
 
     <div class="card">
         <form id="convertForm">
             <label for="accountId">Ghostfolio Account ID</label>
-            <input
-                type="text"
-                id="accountId"
-                name="accountId"
-                placeholder="e.g. 550e8400-e29b-41d4-a716-446655440000"
-                pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-                required
-            >
+            <div class="input-group">
+                <input
+                    type="hidden"
+                    id="accountId"
+                    name="accountId"
+                    required
+                >
+                <div class="account-display empty" id="accountDisplay" contenteditable="true" data-placeholder="Type or paste UUID, or click to select from history"></div>
+                <button type="button" class="paste-btn" id="accountPasteBtn" title="Paste from clipboard">📋</button>
+                <div class="history-dropdown" id="accountHistoryDropdown"></div>
+            </div>
 
             <label for="tagIds">Tag IDs (optional)</label>
-            <input
-                type="text"
-                id="tagIds"
-                name="tagIds"
-                placeholder="e.g. uuid1, uuid2 (comma-separated)"
-            >
+            <div class="input-group">
+                <input
+                    type="hidden"
+                    id="tagIds"
+                    name="tagIds"
+                >
+                <div class="tags-display empty" id="tagsDisplay" contenteditable="true" data-placeholder="Type or paste UUIDs (comma-separated), or click to select from history"></div>
+                <button type="button" class="paste-btn" id="tagPasteBtn" title="Paste from clipboard">📋</button>
+                <div class="history-dropdown" id="tagHistoryDropdown"></div>
+            </div>
 
             <label>CSV Export File</label>
             <div class="file-upload" id="dropZone">
@@ -195,161 +59,30 @@
         <br><br>
         Find your Account ID in Ghostfolio under <strong>Settings → Accounts</strong>.
         <br>
-        Find your Tag IDs in Ghostfolio under <strong>Settings → Tags</strong> (click on a tag to see its UUID in the URL).
+        Find your Tag IDs in Ghostfolio under <strong>Settings → Tags</strong> (click a tag to see its UUID in the URL).
     </div>
 
-    <script>
-        const form = document.getElementById('convertForm');
-        const fileInput = document.getElementById('fileInput');
-        const dropZone = document.getElementById('dropZone');
-        const fileLabel = document.getElementById('fileLabel');
-        const status = document.getElementById('status');
-        const submitBtn = document.getElementById('submitBtn');
-        const accountIdInput = document.getElementById('accountId');
-        const tagIdsInput = document.getElementById('tagIds');
+    <div class="actions-row">
+        <button type="button" id="exportBackupBtn">Export IDs backup</button>
+        <input type="file" id="importBackupInput" accept="application/json,.json" />
+        <button type="button" id="importBackupBtn">Import backup</button>
+    </div>
 
-        // Load saved account ID from localStorage
-        const savedAccountId = localStorage.getItem('ghostfolio_account_id');
-        if (savedAccountId) {
-            accountIdInput.value = savedAccountId;
-        }
+    <!-- Alias edit modal -->
+    <div class="modal-overlay" id="aliasModalOverlay" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="modal">
+            <h3 id="aliasModalTitle">Edit alias</h3>
+            <div style="font-size: 12px; color: #666; margin-bottom: 12px; font-family: monospace;" id="aliasModalId"></div>
+            <label for="aliasModalInput" style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;">Alias</label>
+            <input type="text" id="aliasModalInput" placeholder="e.g. IBKR Main Account" />
+            <div class="modal-actions">
+                <button type="button" class="cancel-btn" id="aliasModalCancel">Cancel</button>
+                <button type="button" id="aliasModalSave">Save</button>
+            </div>
+        </div>
+    </div>
 
-        // Load saved tag IDs from localStorage
-        const savedTagIds = localStorage.getItem('ghostfolio_tag_ids');
-        if (savedTagIds) {
-            tagIdsInput.value = savedTagIds;
-        }
-
-        // Save account ID when changed
-        accountIdInput.addEventListener('change', () => {
-            localStorage.setItem('ghostfolio_account_id', accountIdInput.value);
-        });
-
-        // Save tag IDs when changed
-        tagIdsInput.addEventListener('change', () => {
-            localStorage.setItem('ghostfolio_tag_ids', tagIdsInput.value);
-        });
-
-        // File selection
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                updateFileDisplay(e.target.files[0]);
-            }
-        });
-
-        // Drag and drop
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-
-            const files = e.dataTransfer.files;
-            if (files.length > 0 && files[0].name.endsWith('.csv')) {
-                fileInput.files = files;
-                updateFileDisplay(files[0]);
-            }
-        });
-
-        function updateFileDisplay(file) {
-            fileLabel.innerHTML = `<span class="file-name">${file.name}</span><br><small>${(file.size / 1024).toFixed(1)} KB</small>`;
-            dropZone.classList.add('has-file');
-        }
-
-        function showStatus(message, type) {
-            status.className = 'status ' + type;
-            status.innerHTML = message;
-        }
-
-        // Form submission
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const file = fileInput.files[0];
-            const accountId = accountIdInput.value.trim();
-            const tagIds = tagIdsInput.value.trim();
-
-            if (!file || !accountId) {
-                showStatus('Please fill in all required fields', 'error');
-                return;
-            }
-
-            // Validate UUID format
-            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-            if (!uuidRegex.test(accountId)) {
-                showStatus('Invalid Account ID format. Expected UUID format.', 'error');
-                return;
-            }
-
-            // Validate tag IDs format (if provided)
-            if (tagIds) {
-                const tagIdArray = tagIds.split(',').map(t => t.trim()).filter(t => t !== '');
-                for (const tagId of tagIdArray) {
-                    if (!uuidRegex.test(tagId)) {
-                        showStatus(`Invalid Tag ID format: '${tagId}'. Expected UUID format.`, 'error');
-                        return;
-                    }
-                }
-            }
-
-            submitBtn.disabled = true;
-            showStatus('<span class="spinner"></span>Converting... This may take a moment.', 'loading');
-
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('accountId', accountId);
-                if (tagIds) {
-                    formData.append('tagIds', tagIds);
-                }
-
-                const response = await fetch('/convert', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.message || 'Conversion failed');
-                }
-
-                // Get filename from Content-Disposition header
-                const disposition = response.headers.get('Content-Disposition');
-                let filename = 'ghostfolio-import.json';
-                if (disposition) {
-                    const match = disposition.match(/filename="(.+)"/);
-                    if (match) filename = match[1];
-                }
-
-                // Download the file
-                const blob = await response.blob();
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-                showStatus('✓ Conversion successful! File downloaded.', 'success');
-
-            } catch (err) {
-                showStatus('✗ ' + err.message, 'error');
-            } finally {
-                submitBtn.disabled = false;
-            }
-        });
-    </script>
+    <script src="/scripts.js"></script>
 </body>
 </html>
 

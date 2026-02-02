@@ -305,6 +305,16 @@ async function handleRequest(req: http.IncomingMessage, res: http.ServerResponse
             handleHealth(res);
         } else if (method === "POST" && url === "/convert") {
             await handleConvert(req, res);
+        } else if (method === "GET" && (url.endsWith('.css') || url.endsWith('.js'))) {
+            const filePath = path.join(process.cwd(), "src", "web", url);
+            if (fs.existsSync(filePath)) {
+                const fileStream = fs.createReadStream(filePath);
+                const contentType = url.endsWith('.css') ? 'text/css' : 'application/javascript';
+                res.writeHead(200, { 'Content-Type': contentType });
+                fileStream.pipe(res);
+            } else {
+                sendJsonResponse(res, 404, { error: "Not found" });
+            }
         } else {
             const availableRoutes = routes.map(r => `${r.method} ${r.path}`).join(", ");
             sendJsonResponse(res, 404, {

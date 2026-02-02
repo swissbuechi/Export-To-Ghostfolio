@@ -4,7 +4,6 @@ import { detectConverterType } from "./converterAutoDetect";
 import * as coreConverter from "./coreConverter";
 import { GhostfolioOrderType } from "./models/ghostfolioOrderType";
 
-// Helper function to make HTTP requests to the test server
 function makeRequest(
     server: http.Server,
     options: {
